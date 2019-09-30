@@ -1,0 +1,4 @@
+options:
+  minimumXcodeGenVersion: "11.0"
+  bundleIdPrefix: dev.xcodegen
+  xcodeVersion: "11.0"

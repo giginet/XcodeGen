@@ -1,0 +1,5 @@
+options:
+  minimumXcodeGenVersion: "12.0"
+  xcodeVersion: "10.0"
+  defaultConfig: "Debug"
+  developmentLanguage: "ja"

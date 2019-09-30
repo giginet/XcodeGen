@@ -1,0 +1,6 @@
+include:
+  - base0.yml
+  - base1.yml
+options:
+  xcodeVersion: "10.0"
+name: MyProject

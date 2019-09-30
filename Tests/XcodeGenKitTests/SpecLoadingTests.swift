@@ -8,6 +8,15 @@ import XCTest
 import Yams
 
 class SpecLoadingTests: XCTestCase {
+    
+    func testSpecLoaderMergingFromMultipleIncludes() {
+        describe() {
+            $0.it("merges duplicated values") {
+                let path = fixturePath + "merging_multiple_includes/including.yml"
+                let project = try loadSpec(path: path)
+            }
+        }
+    }
 
     func testSpecLoaderDuplicateImports() {
         describe {
