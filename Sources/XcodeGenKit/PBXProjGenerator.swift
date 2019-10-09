@@ -523,8 +523,8 @@ public class PBXProjGenerator {
                 let fileReference: PBXFileElement
                 if dependency.implicit {
                     fileReference = sourceGenerator.getFileReference(
-                        path: Path(dependency.reference),
-                        inPath: project.basePath,
+                        path: Path(Path(dependency.reference).lastComponent),
+                        inPath: nil,
                         sourceTree: .buildProductsDir
                     )
                 } else {

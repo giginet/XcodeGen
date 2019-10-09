@@ -142,12 +142,12 @@ class SourceGenerator {
         return fileReference
     }
 
-    func getFileReference(path: Path, inPath: Path, name: String? = nil, sourceTree: PBXSourceTree = .group, lastKnownFileType: String? = nil) -> PBXFileElement {
+    func getFileReference(path: Path, inPath: Path?, name: String? = nil, sourceTree: PBXSourceTree = .group, lastKnownFileType: String? = nil) -> PBXFileElement {
         let fileReferenceKey = path.string.lowercased()
         if let fileReference = fileReferencesByPath[fileReferenceKey] {
             return fileReference
         } else {
-            let fileReferencePath = (try? path.relativePath(from: inPath)) ?? path
+            let fileReferencePath = inPath.flatMap { try? path.relativePath(from: $0) } ?? path
             var fileReferenceName: String? = name ?? fileReferencePath.lastComponent
             if fileReferencePath.string == fileReferenceName {
                 fileReferenceName = nil
