@@ -1,18 +1,5 @@
 import Foundation
 
-public extension Array {
-
-   func parallelMap<T>(transform: (Element) -> T) -> [T] {
-       var result = ContiguousArray<T?>(repeating: nil, count: count)
-       return result.withUnsafeMutableBufferPointer { buffer in
-           DispatchQueue.concurrentPerform(iterations: buffer.count) { idx in
-               buffer[idx] = transform(self[idx])
-           }
-           return buffer.map { $0! }
-       }
-   }
-}
-
 /// Holds a sorted array, created from specified sequence
 /// This structure is needed for the cases, when some part of application requires array to be sorted, but don't trust any inputs :)
 public struct SortedArray<T: Comparable> {
