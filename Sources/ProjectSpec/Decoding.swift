@@ -4,33 +4,39 @@ import PathKit
 import Yams
 
 extension Dictionary where Key: JSONKey {
-    public func json<T: NamedJSONDictionaryConvertible>(atKeyPath keyPath: JSONUtilities.KeyPath, invalidItemBehaviour: InvalidItemBehaviour<T> = .remove, parallel: Bool = false) throws -> [T] {
+    public func json<T: NamedJSONDictionaryConvertible & Hashable>(atKeyPath keyPath: JSONUtilities.KeyPath, invalidItemBehaviour: InvalidItemBehaviour<T> = .remove, parallel: Bool = false) async throws -> Set<T> {
         guard let dictionary = json(atKeyPath: keyPath) as JSONDictionary? else {
             return []
         }
         if parallel {
-            let defaultError = NSError(domain: "Unspecified error", code: 0, userInfo: nil)
             let keys = Array(dictionary.keys)
-            var itemResults: [Result<T, Error>] = Array(repeating: .failure(defaultError), count: keys.count)
-            itemResults.withUnsafeMutableBufferPointer { buffer in
-                DispatchQueue.concurrentPerform(iterations: dictionary.count) { idx in
-                    do {
-                        let key = keys[idx]
-                        let jsonDictionary: JSONDictionary = try dictionary.json(atKeyPath: .key(key))
-                        let item = try T(name: key, jsonDictionary: jsonDictionary)
-                        buffer[idx] = .success(item)
-                    } catch {
-                        buffer[idx] = .failure(error)
+
+            return try await withThrowingTaskGroup(of: Result<T, Error>.self, returning: Set<T>.self) { group in
+                for idx in 0..<count {
+                    group.addTask {
+                        do {
+                            let key = keys[idx]
+                            let jsonDictionary: JSONDictionary = try dictionary.json(atKeyPath: .key(key))
+                            let item = try T(name: key, jsonDictionary: jsonDictionary)
+                            return .success(item)
+                        } catch {
+                            return .failure(error)
+                        }
                     }
                 }
+                var results: Set<T> = []
+                for try await result in group {
+                    let item = try result.get()
+                    results.insert(item)
+                }
+                return results
             }
-            return try itemResults.map { try $0.get() }
         } else {
-            var items: [T] = []
+            var items: Set<T> = []
             for (key, _) in dictionary {
                 let jsonDictionary: JSONDictionary = try dictionary.json(atKeyPath: .key(key))
                 let item = try T(name: key, jsonDictionary: jsonDictionary)
-                items.append(item)
+                items.insert(item)
             }
             return items
         }
