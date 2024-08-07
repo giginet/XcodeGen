@@ -46,9 +46,9 @@ class GlobTests: XCTestCase {
         return String(validatingUTF8: mkdtemp(&tmpDirTmpl))!
     }
 
-    func testBraces() {
+    func testBraces() async {
         let pattern = "\(tmpDir)/ba{r,y,z}"
-        let glob = Glob(pattern: pattern)
+        let glob = await Glob(pattern: pattern)
         var contents = [String]()
         for file in glob {
             contents.append(file)
@@ -56,9 +56,9 @@ class GlobTests: XCTestCase {
         XCTAssertEqual(contents, ["\(tmpDir)/bar", "\(tmpDir)/baz"], "matching with braces failed")
     }
 
-    func testNothingMatches() {
+    func testNothingMatches() async {
         let pattern = "\(tmpDir)/nothing"
-        let glob = Glob(pattern: pattern)
+        let glob = await Glob(pattern: pattern)
         var contents = [String]()
         for file in glob {
             contents.append(file)
@@ -66,15 +66,15 @@ class GlobTests: XCTestCase {
         XCTAssertEqual(contents, [], "expected empty list of files")
     }
 
-    func testDirectAccess() {
+    func testDirectAccess() async {
         let pattern = "\(tmpDir)/ba{r,y,z}"
-        let glob = Glob(pattern: pattern)
+        let glob = await Glob(pattern: pattern)
         XCTAssertEqual(glob.paths, ["\(tmpDir)/bar", "\(tmpDir)/baz"], "matching with braces failed")
     }
 
-    func testIterateTwice() {
+    func testIterateTwice() async {
         let pattern = "\(tmpDir)/ba{r,y,z}"
-        let glob = Glob(pattern: pattern)
+        let glob = await Glob(pattern: pattern)
         var contents1 = [String]()
         var contents2 = [String]()
         for file in glob {
@@ -88,47 +88,47 @@ class GlobTests: XCTestCase {
         XCTAssertEqual(glob.paths, filesAfterOnce, "calling for-in twice doesn't only memoizes once")
     }
 
-    func testIndexing() {
+    func testIndexing() async {
         let pattern = "\(tmpDir)/ba{r,y,z}"
-        let glob = Glob(pattern: pattern)
+        let glob = await Glob(pattern: pattern)
         XCTAssertEqual(glob[0], "\(tmpDir)/bar", "indexing")
     }
 
     // MARK: - Globstar - Bash v3
 
-    func testGlobstarBashV3NoSlash() {
+    func testGlobstarBashV3NoSlash() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**"
         let pattern = "\(tmpDir)/**"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
         XCTAssertEqual(glob.paths, ["\(tmpDir)/bar", "\(tmpDir)/baz", "\(tmpDir)/dir1/", "\(tmpDir)/foo"])
     }
 
-    func testGlobstarBashV3WithSlash() {
+    func testGlobstarBashV3WithSlash() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**/"
         let pattern = "\(tmpDir)/**/"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
         XCTAssertEqual(glob.paths, ["\(tmpDir)/dir1/"])
     }
 
-    func testGlobstarBashV3WithSlashAndWildcard() {
+    func testGlobstarBashV3WithSlashAndWildcard() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**/*"
         let pattern = "\(tmpDir)/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
         XCTAssertEqual(glob.paths, ["\(tmpDir)/dir1/dir2/", "\(tmpDir)/dir1/file1.ext", "\(tmpDir)/dir1/file1.extfoo"])
     }
 
-    func testDoubleGlobstarBashV3() {
+    func testDoubleGlobstarBashV3() async {
         let pattern = "\(tmpDir)/**/dir2/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV3)
         XCTAssertEqual(glob.paths, ["\(tmpDir)/dir1/dir2/dir3/file2.ext"])
     }
 
     // MARK: - Globstar - Bash v4
 
-    func testGlobstarBashV4NoSlash() {
+    func testGlobstarBashV4NoSlash() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**"
         let pattern = "\(tmpDir)/**"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/",
             "\(tmpDir)/bar",
@@ -143,10 +143,10 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testGlobstarBashV4WithSlash() {
+    func testGlobstarBashV4WithSlash() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**/"
         let pattern = "\(tmpDir)/**/"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/",
             "\(tmpDir)/dir1/",
@@ -155,10 +155,10 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testGlobstarBashV4WithSlashAndWildcard() {
+    func testGlobstarBashV4WithSlashAndWildcard() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**/*"
         let pattern = "\(tmpDir)/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/bar",
             "\(tmpDir)/baz",
@@ -172,20 +172,20 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testDoubleGlobstarBashV4() {
+    func testDoubleGlobstarBashV4() async {
         let pattern = "\(tmpDir)/**/dir2/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/dir1/dir2/dir3/",
             "\(tmpDir)/dir1/dir2/dir3/file2.ext",
         ])
     }
 
-    func testDoubleGlobstarBashV4WithFileExtension() {
+    func testDoubleGlobstarBashV4WithFileExtension() async {
         // Should be the equivalent of "ls -d -1 /(tmpdir)/**/*.ext"
         // Should not find "\(tmpDir)/dir1/file1.extfoo" which the file extension prefix is .ext
         let pattern = "\(tmpDir)/**/*.ext"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorBashV4)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/dir1/dir2/dir3/file2.ext",
             "\(tmpDir)/dir1/file1.ext",
@@ -194,7 +194,7 @@ class GlobTests: XCTestCase {
 
     // MARK: - Globstar - Gradle
 
-    func testGlobstarGradleNoSlash() {
+    func testGlobstarGradleNoSlash() async {
         // Should be the equivalent of
         // FileTree tree = project.fileTree((Object)'/tmp') {
         //   include 'glob-test.7m0Lp/**'
@@ -202,7 +202,7 @@ class GlobTests: XCTestCase {
         //
         // Note that the sort order currently matches Bash and not Gradle
         let pattern = "\(tmpDir)/**"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorGradle)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorGradle)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/bar",
             "\(tmpDir)/baz",
@@ -213,7 +213,7 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testGlobstarGradleWithSlash() {
+    func testGlobstarGradleWithSlash() async {
         // Should be the equivalent of
         // FileTree tree = project.fileTree((Object)'/tmp') {
         //   include 'glob-test.7m0Lp/**/'
@@ -221,7 +221,7 @@ class GlobTests: XCTestCase {
         //
         // Note that the sort order currently matches Bash and not Gradle
         let pattern = "\(tmpDir)/**/"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorGradle)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorGradle)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/bar",
             "\(tmpDir)/baz",
@@ -232,7 +232,7 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testGlobstarGradleWithSlashAndWildcard() {
+    func testGlobstarGradleWithSlashAndWildcard() async {
         // Should be the equivalent of
         // FileTree tree = project.fileTree((Object)'/tmp') {
         //   include 'glob-test.7m0Lp/**/*'
@@ -240,7 +240,7 @@ class GlobTests: XCTestCase {
         //
         // Note that the sort order currently matches Bash and not Gradle
         let pattern = "\(tmpDir)/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorGradle)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorGradle)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/bar",
             "\(tmpDir)/baz",
@@ -251,7 +251,7 @@ class GlobTests: XCTestCase {
         ])
     }
 
-    func testDoubleGlobstarGradle() {
+    func testDoubleGlobstarGradle() async {
         // Should be the equivalent of
         // FileTree tree = project.fileTree((Object)'/tmp') {
         //   include 'glob-test.7m0Lp/**/dir2/**/*'
@@ -259,16 +259,16 @@ class GlobTests: XCTestCase {
         //
         // Note that the sort order currently matches Bash and not Gradle
         let pattern = "\(tmpDir)/**/dir2/**/*"
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorGradle)
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorGradle)
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/dir1/dir2/dir3/file2.ext",
         ])
     }
 
-    func testBlacklistedDirectories() {
+    func testBlacklistedDirectories() async {
         let pattern = "\(tmpDir)/**/*"
 
-        let glob = Glob(pattern: pattern, behavior: GlobBehaviorGradle, blacklistedDirectories: ["dir1"])
+        let glob = await Glob(pattern: pattern, behavior: GlobBehaviorGradle, blacklistedDirectories: ["dir1"])
 
         XCTAssertEqual(glob.paths, [
             "\(tmpDir)/bar",

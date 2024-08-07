@@ -4,14 +4,14 @@ import PathKit
 import Yams
 
 extension Dictionary where Key: JSONKey {
-    public func json<T: NamedJSONDictionaryConvertible & Hashable>(atKeyPath keyPath: JSONUtilities.KeyPath, invalidItemBehaviour: InvalidItemBehaviour<T> = .remove, parallel: Bool = false) async throws -> Set<T> {
+    public func json<T: NamedJSONDictionaryConvertible>(atKeyPath keyPath: JSONUtilities.KeyPath, invalidItemBehaviour: InvalidItemBehaviour<T> = .remove, parallel: Bool = false) async throws -> [T] {
         guard let dictionary = json(atKeyPath: keyPath) as JSONDictionary? else {
             return []
         }
         if parallel {
             let keys = Array(dictionary.keys)
 
-            return try await withThrowingTaskGroup(of: Result<T, Error>.self, returning: Set<T>.self) { group in
+            return try await withThrowingTaskGroup(of: Result<T, Error>.self, returning: [T].self) { group in
                 for idx in 0..<count {
                     group.addTask {
                         do {
@@ -24,21 +24,21 @@ extension Dictionary where Key: JSONKey {
                         }
                     }
                 }
-                var results: Set<T> = []
+                var results: Array<T> = []
                 for try await result in group {
                     let item = try result.get()
-                    results.insert(item)
+                    results.append(item)
                 }
-                return results
+                return Array(results)
             }
         } else {
-            var items: Set<T> = []
+            var items: Array<T> = []
             for (key, _) in dictionary {
                 let jsonDictionary: JSONDictionary = try dictionary.json(atKeyPath: .key(key))
                 let item = try T(name: key, jsonDictionary: jsonDictionary)
-                items.insert(item)
+                items.append(item)
             }
-            return items
+            return Array(items)
         }
     }
 

@@ -13,12 +13,12 @@ public class ProjectGenerator {
         self.project = project
     }
 
-    public func generateXcodeProject(in projectDirectory: Path? = nil, userName: String) throws -> XcodeProj {
+    public func generateXcodeProject(in projectDirectory: Path? = nil, userName: String) async throws -> XcodeProj {
 
         // generate PBXProj
         let pbxProjGenerator = PBXProjGenerator(project: project,
                                                 projectDirectory: projectDirectory)
-        let pbxProj = try pbxProjGenerator.generate()
+        let pbxProj = try await pbxProjGenerator.generate()
 
         // generate Workspace
         let workspace = try generateWorkspace()

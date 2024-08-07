@@ -49,14 +49,14 @@ public class PBXProjGenerator {
         return object
     }
 
-    public func generate() throws -> PBXProj {
+    public func generate() async throws -> PBXProj {
         if generated {
             fatalError("Cannot use PBXProjGenerator to generate more than once")
         }
         generated = true
 
         for group in project.fileGroups {
-            try sourceGenerator.getFileGroups(path: group)
+            try await sourceGenerator.getFileGroups(path: group)
         }
 
         let buildConfigs: [XCBuildConfiguration] = project.configs.map { config in
@@ -227,8 +227,12 @@ public class PBXProjGenerator {
             pbxProject.projects = subprojects
         }
 
-        try project.targets.forEach(generateTarget)
-        try project.aggregateTargets.forEach(generateAggregateTarget)
+        for target in project.targets {
+            try await generateTarget(target)
+        }
+        for aggregateTarget in project.aggregateTargets {
+            try generateAggregateTarget(aggregateTarget)
+        }
 
         if !carthageFrameworksByPlatform.isEmpty {
             var platforms: [PBXGroup] = []
@@ -676,13 +680,13 @@ public class PBXProjGenerator {
         return pbxproj
     }
 
-    func generateTarget(_ target: Target) throws {
+    func generateTarget(_ target: Target) async throws {
         let carthageDependencies = carthageResolver.dependencies(for: target)
 
         let infoPlistFiles: [Config: String] = getInfoPlists(for: target)
         let sourceFileBuildPhaseOverrideSequence: [(Path, BuildPhaseSpec)] = Set(infoPlistFiles.values).map({ (project.basePath + $0, .none) })
         let sourceFileBuildPhaseOverrides = Dictionary(uniqueKeysWithValues: sourceFileBuildPhaseOverrideSequence)
-        let sourceFiles = try sourceGenerator.getAllSourceFiles(targetType: target.type, sources: target.sources, buildPhases: sourceFileBuildPhaseOverrides)
+        let sourceFiles = try await sourceGenerator.getAllSourceFiles(targetType: target.type, sources: target.sources, buildPhases: sourceFileBuildPhaseOverrides)
             .sorted { $0.path.lastComponent < $1.path.lastComponent }
 
         var anyDependencyRequiresObjCLinking = false

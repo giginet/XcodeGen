@@ -158,16 +158,16 @@ extension Project: Equatable {
 
 extension Project {
 
-    public init(path: Path) throws {
+    public init(path: Path) async throws {
         let spec = try SpecFile(path: path)
-        try self.init(spec: spec)
+        try await self.init(spec: spec)
     }
 
-    public init(spec: SpecFile) throws {
-        try self.init(basePath: spec.basePath, jsonDictionary: spec.resolvedDictionary())
+    public init(spec: SpecFile) async throws {
+        try await self.init(basePath: spec.basePath, jsonDictionary: spec.resolvedDictionary())
     }
 
-    public init(basePath: Path = "", jsonDictionary: JSONDictionary) throws {
+    public init(basePath: Path = "", jsonDictionary: JSONDictionary) async throws {
         self.basePath = basePath
 
         let jsonDictionary = Project.resolveProject(jsonDictionary: jsonDictionary)
@@ -179,10 +179,10 @@ extension Project {
         let configs: [String: String] = jsonDictionary.json(atKeyPath: "configs") ?? [:]
         self.configs = configs.isEmpty ? Config.defaultConfigs :
             configs.map { Config(name: $0, type: ConfigType(rawValue: $1)) }.sorted { $0.name < $1.name }
-        targets = try jsonDictionary.json(atKeyPath: "targets", parallel: true).sorted { $0.name < $1.name }
-        aggregateTargets = try jsonDictionary.json(atKeyPath: "aggregateTargets").sorted { $0.name < $1.name }
-        projectReferences = try jsonDictionary.json(atKeyPath: "projectReferences").sorted { $0.name < $1.name }
-        schemes = try jsonDictionary.json(atKeyPath: "schemes")
+        targets = try await jsonDictionary.json(atKeyPath: "targets", parallel: true).sorted { $0.name < $1.name }
+        aggregateTargets = try await jsonDictionary.json(atKeyPath: "aggregateTargets").sorted { $0.name < $1.name }
+        projectReferences = try await jsonDictionary.json(atKeyPath: "projectReferences").sorted { $0.name < $1.name }
+        schemes = try await jsonDictionary.json(atKeyPath: "schemes")
         if jsonDictionary["breakpoints"] != nil {
             breakpoints = try jsonDictionary.json(atKeyPath: "breakpoints", invalidItemBehaviour: .fail)
         } else {

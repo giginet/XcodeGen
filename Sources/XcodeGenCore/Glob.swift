@@ -71,7 +71,7 @@ public class Glob: Collection {
     ///   - pattern: The pattern to use when building the list of matching directories.
     ///   - behavior: See individual descriptions on `Glob.Behavior` values.
     ///   - blacklistedDirectories: An array of directories to ignore at the root level of the project.
-    public init(pattern: String, behavior: Behavior = Glob.defaultBehavior, blacklistedDirectories: [String] = defaultBlacklistedDirectories) {
+    public init(pattern: String, behavior: Behavior = Glob.defaultBehavior, blacklistedDirectories: [String] = defaultBlacklistedDirectories) async {
 
         self.behavior = behavior
         self.blacklistedDirectories = blacklistedDirectories
@@ -88,13 +88,13 @@ public class Glob: Collection {
             }
         }
 
-        let patterns = behavior.supportsGlobstar ? expandGlobstar(pattern: adjustedPattern) : [adjustedPattern]
-        
+        let patterns = Set(behavior.supportsGlobstar ? expandGlobstar(pattern: adjustedPattern) : [adjustedPattern])
+
         #if os(macOS)
-        paths = patterns.parallelMap { paths(usingPattern: $0, includeFiles: includeFiles) }.flatMap { $0 }
+        paths = await patterns.parallelMap { self.paths(usingPattern: $0, includeFiles: includeFiles) }.flatMap { $0 }
         #else
         // Parallel invocations of Glob on Linux seems to be causing unexpected crashes
-        paths = patterns.map { paths(usingPattern: $0, includeFiles: includeFiles) }.flatMap { $0 }
+        paths = await patterns.map { paths(usingPattern: $0, includeFiles: includeFiles) }.flatMap { $0 }
         #endif
 
         paths = Array(Set(paths)).sorted { lhs, rhs in

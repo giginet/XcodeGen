@@ -86,13 +86,14 @@ class SourceGenerator {
     ///   - targetType: The type of target that the source files should belong to.
     ///   - sources: The array of sources defined as part of the targets spec.
     ///   - buildPhases: A dictionary containing any build phases that should be applied to source files at specific paths in the event that the associated `TargetSource` didn't already define a `buildPhase`. Values from this dictionary are used in cases where the project generator knows more about a file than the spec/filesystem does (i.e if the file should be treated as the targets Info.plist and so on).
-    func getAllSourceFiles(targetType: PBXProductType, sources: [TargetSource], buildPhases: [Path : BuildPhaseSpec]) throws -> [SourceFile] {
-        try sources.flatMap { try getSourceFiles(targetType: targetType, targetSource: $0, buildPhases: buildPhases) }
+    func getAllSourceFiles(targetType: PBXProductType, sources: [TargetSource], buildPhases: [Path : BuildPhaseSpec]) async throws -> [SourceFile] {
+        []
+//        try sources.flatMap { try await getSourceFiles(targetType: targetType, targetSource: $0, buildPhases: buildPhases) }
     }
 
     // get groups without build files. Use for Project.fileGroups
-    func getFileGroups(path: String) throws {
-        _ = try getSourceFiles(targetType: .none, targetSource: TargetSource(path: path), buildPhases: [:])
+    func getFileGroups(path: String) async throws {
+        _ = try await getSourceFiles(targetType: .none, targetSource: TargetSource(path: path), buildPhases: [:])
     }
 
     func getFileType(path: Path) -> FileType? {
@@ -373,13 +374,13 @@ class SourceGenerator {
     }
 
     /// Collects all the excluded paths within the targetSource
-    private func getSourceMatches(targetSource: TargetSource, patterns: [String]) -> Set<Path> {
+    private func getSourceMatches(targetSource: TargetSource, patterns: [String]) async -> Set<Path> {
         let rootSourcePath = project.basePath + targetSource.path
 
-        return Set(
-            patterns.parallelMap { pattern in
+        return await Set(
+            Set(patterns).parallelMap { pattern in
                 guard !pattern.isEmpty else { return [] }
-                return Glob(pattern: "\(rootSourcePath)/\(pattern)")
+                return await Glob(pattern: "\(rootSourcePath)/\(pattern)")
                     .map { Path($0) }
                     .map {
                         guard $0.isDirectory else {
@@ -601,13 +602,13 @@ class SourceGenerator {
     }
 
     /// creates source files
-    private func getSourceFiles(targetType: PBXProductType, targetSource: TargetSource, buildPhases: [Path: BuildPhaseSpec]) throws -> [SourceFile] {
+    private func getSourceFiles(targetType: PBXProductType, targetSource: TargetSource, buildPhases: [Path: BuildPhaseSpec]) async throws -> [SourceFile] {
 
         // generate excluded paths
         let path = project.basePath + targetSource.path
-        let excludePaths = getSourceMatches(targetSource: targetSource, patterns: targetSource.excludes)
+        let excludePaths = await getSourceMatches(targetSource: targetSource, patterns: targetSource.excludes)
         // generate included paths. Excluded paths will override this.
-        let includePaths = targetSource.includes.isEmpty ? nil : getSourceMatches(targetSource: targetSource, patterns: targetSource.includes)
+        let includePaths = await targetSource.includes.isEmpty ? nil : getSourceMatches(targetSource: targetSource, patterns: targetSource.includes)
 
         let type = resolvedTargetSourceType(for: targetSource, at: path)
 

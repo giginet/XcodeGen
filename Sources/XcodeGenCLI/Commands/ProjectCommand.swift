@@ -31,33 +31,33 @@ class ProjectCommand: Command {
     }
 
     func execute() throws {
-        
-        var projectSpecs: [Path] = []
-        if let spec = spec {
-            projectSpecs = spec.components(separatedBy: ",").map { Path($0).absolute() }
-        } else {
-            projectSpecs = [ Path("project.yml").absolute() ]
-        }
-        
-        for projectSpecPath in projectSpecs {
-            if !projectSpecPath.exists {
-                throw GenerationError.missingProjectSpec(projectSpecPath)
-            }
-            
-            
-            let specLoader = SpecLoader(version: version)
-            let project: Project
-            
-            let variables: [String: String] = disableEnvExpansion ? [:] : ProcessInfo.processInfo.environment
-            
-            do {
-                project = try specLoader.loadProject(path: projectSpecPath, projectRoot: projectRoot, variables: variables)
-            } catch {
-                throw GenerationError.projectSpecParsingError(error)
-            }
-            
-            try execute(specLoader: specLoader, projectSpecPath: projectSpecPath, project: project)
-        }
+        fatalError()
+//        var projectSpecs: [Path] = []
+//        if let spec = spec {
+//            projectSpecs = spec.components(separatedBy: ",").map { Path($0).absolute() }
+//        } else {
+//            projectSpecs = [ Path("project.yml").absolute() ]
+//        }
+//
+//        for projectSpecPath in projectSpecs {
+//            if !projectSpecPath.exists {
+//                throw GenerationError.missingProjectSpec(projectSpecPath)
+//            }
+//
+//
+//            let specLoader = SpecLoader(version: version)
+//            let project: Project
+//
+//            let variables: [String: String] = disableEnvExpansion ? [:] : ProcessInfo.processInfo.environment
+//
+//            do {
+////                project = try await specLoader.loadProject(path: projectSpecPath, projectRoot: projectRoot, variables: variables)
+//            } catch {
+//                throw GenerationError.projectSpecParsingError(error)
+//            }
+//
+//            try execute(specLoader: specLoader, projectSpecPath: projectSpecPath, project: project)
+//        }
     }
 
     func execute(specLoader: SpecLoader, projectSpecPath: Path, project: Project) throws {}

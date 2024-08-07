@@ -15,11 +15,11 @@ public class SpecLoader {
         self.version = version
     }
 
-    public func loadProject(path: Path, projectRoot: Path? = nil, variables: [String: String] = [:]) throws -> Project {
+    public func loadProject(path: Path, projectRoot: Path? = nil, variables: [String: String] = [:]) async throws -> Project {
         let projectRoot = projectRoot?.absolute()
         let spec = try SpecFile(path: path, projectRoot: projectRoot, variables: variables)
         let resolvedDictionary = spec.resolvedDictionary()
-        let project = try Project(basePath: projectRoot ?? spec.basePath, jsonDictionary: resolvedDictionary)
+        let project = try await Project(basePath: projectRoot ?? spec.basePath, jsonDictionary: resolvedDictionary)
 
         self.project = project
         projectDictionary = resolvedDictionary
